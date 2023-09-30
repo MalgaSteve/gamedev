@@ -11,6 +11,7 @@ float randomFloat();
 void changeTrianglePosition(float vertices[]);
 float square(float a);
 void print_vertice(float* vertices);
+bool check_valid(GLFWwindow* window, float vertices[]); 
 
 const char *vertexShaderSource = 
 	"#version 330 core\n"
@@ -142,13 +143,13 @@ int main() {
 		glClearColor(0.5f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		if (button) {
+		if (button && check_valid(window, vertices1)) {
 			changeTrianglePosition(vertices1);		
 			glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, 
 					GL_STATIC_DRAW);
 			print_vertice(vertices1);
-
+			button = false;
 		}
 		
 		glUseProgram(shaderProgram);
@@ -173,6 +174,9 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            double xPos, yPos;
+	    glfwGetCursorPos(window, &xPos, &yPos);
+	    std::cout << xPos << " ; " << yPos << std::endl;
 	    button = true;
     }
     if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
@@ -222,4 +226,28 @@ void print_vertice(float vertices[]) {
 
 float square(float a) {
 	return a*a;
+}
+
+bool check_valid(GLFWwindow* window, float vertices[]) {
+	double xPos, yPos;
+	glfwGetCursorPos(window, &xPos, &yPos);
+	bool res = false;
+	float t1x = vertices[0];
+	float t1y = vertices[1];
+
+	float t2x = vertices[3];
+	float t2y = vertices[4];
+
+	float t3x = vertices[6];
+	float t3y = vertices[7];
+	
+	float area = (t1x * (t2y-t3y) + t2x * (t3y - t1y) + t3x * (t1y - t2y))/2;
+
+	float area1 = (xPos * (t2y-t3y) + t2x * (t3y - yPos) + t3x * (yPos - t2y))/2;
+	float area2 = (t1x * (yPos-t3y) + xPos * (t3y - t1y) + t3x * (t1y - yPos))/2;
+	float area3 = (t1x * (t2y-yPos) + t2x * (yPos - t1y) + xPos * (t1y - t2y))/2;
+
+	float sum = area1 + area2 + area3;
+
+	return sum == area;
 }
